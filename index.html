@@ -1,0 +1,260 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="jquery-2.1.3.min.js"></script>
+    <script src="par.js"></script>
+    <script src="docs.js"></script>
+    <script src="test.js"></script>
+    <script src="analysis.js"></script>
+    <title>Par</title>
+</head>
+<body>
+    <div style="width: 50%; float: left">
+        <h1><a href="https://github.com/Ypnypn/Par/" style="text-decoration: none; color: #00007f">Par</a> Interpreter</h1>
+        <div style="width: 50%; float: left">
+            <h2>Code - <span id="size">0 bytes</span></h2>
+        </div>
+        <div style="width: 50%; float: right">
+            <label for="fileUpload">Upload .par file</label>
+        </div>
+        <input type="file" id="fileUpload" accept=".par" />
+        <textarea id="code" rows="4" cols="60"></textarea>
+        <h2>Input</h2>
+        <textarea id="input" rows="4" cols="60"></textarea>
+        <div>
+            <button id="run">Run</button>
+        </div>
+        <h2>Output</h2>
+        <textarea id="output" rows="4" cols="60" readonly></textarea>
+    </div>
+    <div style="width: 50%; float: right">
+        <div id="buttons"></div>
+        <div id="doc">
+            <div><span id="symbolName"></span></div>
+            <table id="docTable">
+                <thead>
+                    <tr id="docHeaderRow"></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="analysis">
+        </div>
+    </div>
+    <footer>
+        <p>
+            On your browser, <span id="testResultsText">tests are currently running</span>.
+            <a href="tests.html">See full results.</a>
+        </p>
+    </footer>
+    <script>
+        $(document).ready(function () {
+
+            function updateCodeSize() {
+                const codeSize = $("#code").val().length;
+                $("#size").text(codeSize + " bytes");
+            }
+
+            try {
+                updateCodeSize();
+                analyzeCode();
+            } catch (e) { }
+
+            try {
+                for (var ind = 0; ind < allParChars.length; ind++)
+                    (function (ch) {
+                        $("<button>").appendTo($("#buttons")).text(ch === '\n' ? '<LF>' : ch === ' ' ? '<SP>' : ch).click(function () {
+                            const caretPos = $("#code")[0].selectionStart;
+                            const code = $("#code").val();
+                            $("#code").val(code.substring(0, caretPos) + ch + code.substring(caretPos));
+                            $("#code")[0].selectionStart = caretPos + 1;
+                        }).mouseover(function () {
+                            $("#docTable").show();
+                            const symbolData = documentation[ch];
+                            if (symbolData) {
+                                const arity = arities[ch] % 100 || 0;
+
+                                var symbolTitle = 'abcdefghij'.slice(0, arity) + ch;
+                                if (arities[ch] >= 200)
+                                    symbolTitle += '...)';
+                                if (ch === '`')
+                                    symbolTitle += '...`';
+                                if (ch === '\'')
+                                    symbolTitle += '.';
+                                if (ch >= 'V' && ch <= 'Z')
+                                    symbolTitle = 'a' + symbolTitle;
+                                $("#symbolName").text(symbolTitle);
+
+                                for (var i = 0; i < arity; i++) {
+                                    $("<th>").text('abcdefghij'[i]).appendTo("#docHeaderRow");
+                                }
+                                $("<th>").text('Description').appendTo("#docHeaderRow");
+
+                                for (var sig in symbolData) {
+                                    var newRow = $("<tr>");
+                                    for (var i = 0; i < sig.length; i++)
+                                        $("<td>").text({ '?': 'any', a: 'array', n: 'number', s: 'string' }[sig[i]]).appendTo(newRow);
+                                    $("<td>").html(symbolData[sig].replace(/`(.)`/g, '<code>$1</code>')).appendTo(newRow);
+                                    newRow.appendTo("#docTable tbody");
+                                }
+                            }
+                        }).mouseout(function () {
+                            $("#symbolName").text('');
+                            $("#docHeaderRow th").remove();
+                            $("#doc tbody td").remove();
+                        });
+                    })(allParChars[ind]);
+            } catch (e) {
+            }
+
+            setInterval(updateCodeSize, 200);
+
+            function fit(text, padding, size) {
+                if (size >= text.length)
+                    return text + padding.repeat(size - text.length);
+                else
+                    return text.substring(0, size - 5) + '...' + text.substring(text.length - 2);
+            }
+            function analyzeCode() {
+                if (!window.analyze)
+                    return false;
+
+                const code = $("#code").val();
+                const analysis = analyzePar(code);
+                $("#analysis").html('<pre></pre>');
+                analysis.forEach(line => {
+                    $("#analysis pre").append(`${fit(line[0], ' ', 13)}  ## ${line[1]}\n`);
+                });
+                return true;
+            }
+
+            setInterval(analyzeCode, 1000);
+
+            $("#run").prop("disabled", false);
+            $("#run").click(function () {
+                $("#run").prop("disabled", true);
+                const code = $("#code").val();
+                if (checkCodeValid(code)) {
+                    const input = $("#input").val();
+                    try {
+                        const result = interpretPar(code, input);
+                        const stack = result[0];
+                        const output = result[1];
+                        $("#output").val(output + stack.map(stringify).join(' '));
+                    } catch (e) {
+                        $("#output").val(e.message);
+                    }
+                }
+                $("#run").prop("disabled", false);
+            });
+
+            function checkCodeValid(code) {
+                var output = '';
+                for (var i = 0; i < code.length; i++) {
+                    if (allParChars.indexOf(code[i]) === -1) {
+                        output += "Contains illegal character: '" + c + "'\n";
+                    }
+                }
+                if (output.length !== 0) {
+                    $("#output").val(output);
+                    return false;
+                }
+                return true;
+            }
+
+            $("#fileUpload").change(function (evt) {
+                const file = evt.target.files[0];
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    const data = reader.result;
+                    const code = data.split('').map(function (b) { return allParChars[b.charCodeAt(0)]; }).join('');
+                    $("#code").val(code);
+                };
+                reader.readAsBinaryString(file);
+            });
+
+            setTimeout(function () {
+                var testResults;
+                try {
+                    testResults = runTests();
+                } catch (e) {
+                    testResults = { passed: [], failed: [] };
+                }
+                const passed = testResults.passed;
+                const failed = testResults.failed;
+                const passRate = passed.length / (passed.length + failed.length);
+                $("#testResultsText").text(Math.round(passRate * 10000) / 100 + '% of tests passed');
+
+                var lum = Math.round(passRate * passRate * 255);
+                $("body").css({
+                    "background-color": "rgb(" + lum + "," + lum + "," + lum + ")",
+                    "color": "rgb(" + (255 - lum) + ",0,0)"
+                });
+                $("textarea").css({
+                    "color": "rgb(" + (255 - lum) + ",0,0)"
+                });
+            }, 20);
+        });
+    </script>
+    <style>
+        body {
+            margin: 15px;
+            font-family: Georgia, serif;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin: 6px 4px 8px;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin: 4px;
+        }
+
+        textarea, button {
+            font-family: Consolas, monospace;
+        }
+
+            textarea#output {
+                background-color: #EEEEEE;
+            }
+
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        td, th {
+            padding: 5px;
+            border: 1px black solid;
+        }
+
+        pre, code {
+            font-family: Consolas, monspace;
+            background-color: #DDDDDD;
+        }
+
+        #doc {
+            width: 100%;
+            text-align: center;
+        }
+
+            #doc > div {
+                margin: 25px 5px 10px;
+            }
+
+        #symbolName {
+            font-size: 22px;
+            font-family: Consolas, monospace;
+            background-color: #DDDDDD;
+        }
+
+        footer {
+            clear: left;
+            padding: 20px;
+        }
+    </style>
+</body>
+</html>

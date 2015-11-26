@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="jquery-2.1.3.min.js"></script>
+    <script src="par.js"></script>
+    <script src="docs.js"></script>
+    <script src="test.js"></script>
+    <title>Par - Tests</title>
+</head>
+<body>
+    <h1>Par Tests</h1>
+    <h2 id="summary">Running tests...</h2>
+    <p id="timer" hidden>Tests took <span id="time"></span> to run.</p>
+    <div id="failed" hidden>
+        <h3>Failed tests</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Expected</th>
+                    <th>Actual</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div id="passed" hidden>
+        <h3>Passed tests</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <footer>
+        <a href="index.html">Interpreter</a>
+    </footer>
+
+    <style>
+        body {
+            margin: 15px;
+            font-family: Georgia, serif;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin: 6px 4px 8px;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin: 4px;
+        }
+
+        td {
+            padding: 5px;
+            border: 1px black solid;
+            font-family: Consolas, monspace;
+            background-color: #DDDDDD;
+        }
+
+        footer {
+            clear: both;
+            padding: 20px;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                var start = new Date();
+                var testResults = runTests();
+                var end = new Date();
+
+                var passed = testResults.passed;
+                var failed = testResults.failed;
+                if (failed.length === 0) {
+                    $("#summary").html('All ' + test_s(passed) + ' passed!');
+                } else {
+                    $("#summary").html(test_s(passed) + ' passed. ' + test_s(failed) + ' failed.');
+                    $("#failed").show();
+                    failed.forEach(function (test) {
+                        var $tr = $("<tr>");
+                        $("<td>").text(test.test).appendTo($tr);
+                        $("<td>").text(test.expected).appendTo($tr);
+                        $("<td>").text(test.actual).appendTo($tr);
+                        $tr.appendTo($("#failed tbody"));
+                    });
+                }
+                if (passed.length !== 0) {
+                    $("#passed").show();
+                    passed.forEach(function (test) {
+                        var $tr = $("<tr>");
+                        $("<td>").text(test.test).appendTo($tr);
+                        $("<td>").text(test.expected).appendTo($tr);
+                        $tr.appendTo($("#passed tbody"));
+                    });
+                }
+
+                $("#time").text((end - start) / 1000 + ' seconds').parent().show();
+
+                function test_s(arr) {
+                    return arr.length + (arr.length === 1 ? ' test' : ' tests');
+                }
+            }, 20);
+        });
+    </script>
+</body>
+</html>
