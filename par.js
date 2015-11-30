@@ -502,6 +502,12 @@ window.interpretPar = (function () {
             'Q': function () {
                 throw new ProgramOver();
             },
+            'R': function (a, b) {
+                if (typeof a === 'number' && typeof b === 'number')
+                    return a.toString(b).toUpperCase();
+                if (typeof a === 'string' && typeof b === 'number')
+                    return parseInt(a, b);
+            },
             'S': function (a) {
                 if (typeof a === 'number') {
                     return Math.log2(a);
@@ -662,6 +668,10 @@ window.interpretPar = (function () {
                 return ret;
             },
             'm': function (a) {
+                if (typeof a === 'number')
+                    return a.toString(36).toUpperCase();
+                if (typeof a === 'string')
+                    return parseInt(a, 36);
                 if (Array.isArray(a))
                     return a.reduce((a, b) => a + b, 0) / a.length;
             },
@@ -965,7 +975,7 @@ window.interpretPar = (function () {
                 if (typeof a === 'string')
                     return parseInt(a, 2);
                 if (Array.isArray(a))
-                    return a.reduce(chars['+'], 0);
+                    return typeof a[0] === 'undefined' ? 0 : a.reduce(chars['+']);
             },
             'π': function () {
                 return Math.PI;
@@ -1000,6 +1010,9 @@ window.interpretPar = (function () {
                     }
                     return ret;
                 }
+                if (typeof a === 'string' && typeof b === 'string') {
+                    return +(b.indexOf(a) !== -1);
+                }
                 if (Array.isArray(a) && typeof b === 'number') {
                     const size = Math.pow(a.length, b);
                     const ret = Array(size);
@@ -1013,6 +1026,9 @@ window.interpretPar = (function () {
                         ret[i] = arr;
                     }
                     return ret;
+                }
+                if (Array.isArray(b)) {
+                    return +(b.indexOf(a) !== -1);
                 }
             },
             '⅓': function (a, b, c) {
@@ -1355,13 +1371,13 @@ window.interpretPar = (function () {
             '⁞': function (go) {
                 var arg = stack.pop();
                 if (typeof arg === 'number') {
-                    for (var i = 0; i < arg; i++) {
-                        try {
+                    try {
+                        for (var i = 0; i < arg; i++) {
                             go();
-                        } catch (e) {
-                            if (!(e instanceof BreakLoop))
-                                throw e;
                         }
+                    } catch (e) {
+                        if (!(e instanceof BreakLoop))
+                            throw e;
                     }
                 } else {
                     var i = 0;
@@ -1430,7 +1446,6 @@ window.interpretPar = (function () {
                     stack.push(res);
                 }
             },
-
             '◊': function (go) {
                 try {
                     while (truthy(stack.pop()))
@@ -1575,6 +1590,7 @@ const arities = {
     'N': 1,
     'P': 1,
     'Q': 100,
+    'R': 2,
     'S': 1,
     'T': 1,
     'U': 1,

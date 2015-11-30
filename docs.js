@@ -79,7 +79,7 @@
         '?': 'Execute for each of `a`'
     },
     'K': {
-        '': 'Break out of loop (`@`, `◊`, `♦`)'
+        '': 'Break out of loop (`@`, `:`, `[`, `{`, `}`, `⁞`, `◊`, `♦`)'
     },
     'L': {
         'n': 'Natural logarithm of `a`',
@@ -98,13 +98,17 @@
     'Q': {
         '': 'End the program'
     },
+    'R': {
+        'nn': '`a` in base `b`',
+        'sn': '`a`, treated as in base `b`'
+    },
     'S': {
         'n': 'Base-2 logarithm of `a`',
         's': 'Sorted characters of `a`',
         'a': 'Sorted elements of `a`'
     },
     'T': {
-        'n': 'Ten to the power of `a`',
+        'n': '10 to the power of `a`',
         's': 'Each word of `a` capitalized',
         'a': '`a` transposed'
     },
@@ -171,6 +175,8 @@
         '': 'One line from input'
     },
     'm': {
+        'n': '`a` in base 36',
+        's': '`a`, treated as base 36',
         'a': 'Arithmetic mean of `a`'
     },
     'n': {
@@ -326,7 +332,9 @@
     'ⁿ': {
         'nn': '`a` to the power of `b`',
         'sn': '`b`-ary cartesian power of `a`',
-        'an': '`b`-ary cartesian power of `a`'
+        'ss': '`b` contains `a`',
+        'an': '`b`-ary cartesian power of `a`',
+        '?a': '`b` contains `a`'
     },
     '₁': {
         '': 'If preceded by a numeral, begin a new number starting with 1; otherwise, remove top of stack'

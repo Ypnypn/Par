@@ -430,6 +430,10 @@ window.analyzePar = (function () {
             'Q': {
                 '': ['', 'Quit']
             },
+            'R': {
+                'nn': ['s', 'Decimal to base n'],
+                'sn': ['n', 'Base n to decimal']
+            },
             'S': {
                 'n': ['n', 'Base-2 logarithm'],
                 's': ['s', 'Sort'],
@@ -502,6 +506,8 @@ window.analyzePar = (function () {
                 '': ['s', 'Read line']
             },
             'm': {
+                'n': ['s', 'Decimal to base 36'],
+                's': ['n', 'Base 36 to decimal'],
                 'n[': ['n', 'Arithmetic mean']
             },
             'n': {
@@ -619,7 +625,9 @@ window.analyzePar = (function () {
             'ⁿ': {
                 'n,n': ['n', 'Exponent'],
                 's,n': ['s[', 'Caretesian power'],
-                'T[,n': ['T[[', 'Cartesian power']
+                's,s': ['n', 'Contains'],
+                'T[,n': ['T[[', 'Cartesian power'],
+                'T,U[': ['n', 'Contains']
             },
             '⅓': {
                 'T,U,V': ['V,T,U', 'Move top of stack to third']
