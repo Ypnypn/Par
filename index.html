@@ -68,7 +68,9 @@
                             const caretPos = $("#code")[0].selectionStart;
                             const code = $("#code").val();
                             $("#code").val(code.substring(0, caretPos) + ch + code.substring(caretPos));
+                            $("#code")[0].focus();
                             $("#code")[0].selectionStart = caretPos + 1;
+                            $("#code")[0].selectionEnd = caretPos + 1;
                         }).mouseover(function () {
                             $("#docTable").show();
                             const symbolData = documentation[ch];
@@ -232,7 +234,7 @@
         }
 
         pre, code {
-            font-family: Consolas, monspace;
+            font-family: Consolas, monospace;
             background-color: #DDDDDD;
         }
 

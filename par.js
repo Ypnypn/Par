@@ -41,7 +41,7 @@ window.interpretPar = (function () {
         const isSub = !!options.isSub;
 
         // Parse
-        code = code.replace(/  ##[^\n]*(\n|$)/, ' ');
+        code = code.replace(/  ##[^\n]*(\n|$)/g, ' ');
         code = code.replace(/K/g, 'K)');
 
         const forwards = {};
@@ -663,7 +663,7 @@ window.interpretPar = (function () {
             },
             'm': function (a) {
                 if (Array.isArray(a))
-                    return a.reduce((a, b) => a + b) / a.length;
+                    return a.reduce((a, b) => a + b, 0) / a.length;
             },
             'n': function () {
                 var now = new Date();
@@ -965,7 +965,7 @@ window.interpretPar = (function () {
                 if (typeof a === 'string')
                     return parseInt(a, 2);
                 if (Array.isArray(a))
-                    return a.reduce(chars['+']);
+                    return a.reduce(chars['+'], 0);
             },
             'π': function () {
                 return Math.PI;
@@ -1422,6 +1422,7 @@ window.interpretPar = (function () {
                 } else {
                     var res = [];
                     for (var item of iterate(arg)) {
+                        stack.push(item);
                         go();
                         if (truthy(stack.pop()))
                             res.push(item);
@@ -1429,6 +1430,7 @@ window.interpretPar = (function () {
                     stack.push(res);
                 }
             },
+
             '◊': function (go) {
                 try {
                     while (truthy(stack.pop()))

@@ -785,20 +785,18 @@ window.analyzePar = (function () {
                 else
                     stack.push(arg);
             }],
-            '˄': function (go) {
-                var arg = stack.pop();
-                if (truthy(arg))
-                    go();
-                else
-                    stack.push(arg);
-            },
-            '˅': function (go) {
-                var arg = stack.pop();
-                if (!truthy(arg))
-                    go();
-                else
-                    stack.push(arg);
-            },
+            '˄': ['And', function(go) {
+                var copy = stack.slice();
+                stack.pop();
+                go();
+                stack.splice(0, stack.length, copy);
+            }],
+            '˅': ['Or', function (go) {
+                var copy = stack.slice();
+                stack.pop();
+                go();
+                stack.splice(0, stack.length, copy);
+            }],
             '⁞': ['Iterate', function (go) {
                 var arg = stack.pop();
                 if (arg === 'n') {
@@ -819,62 +817,31 @@ window.analyzePar = (function () {
                 stack.push(obj);
                 go();
             }],
-            '●': function (go) {
+            '●': ['Find index', function (go) {
                 var arg = stack.pop();
-                var i = 0;
-                var found = false;
-                for (var item of iterate(arg)) {
-                    stack.push(item);
-                    go();
-                    if (truthy(stack.pop())) {
-                        stack.push(i);
-                        found = true;
-                        break;
-                    }
-                    i++;
-                }
-                if (!found)
-                    stack.push(-1);
-            },
-            '▼': function (go) {
+                var item = iterate(arg);
+                stack.push(item);
+                go();
+                stack.pop();
+                stack.push('n');
+            }],
+            '▼': ['Filter', function (go) {
                 var arg = stack.pop();
-                if (typeof arg === 'string') {
-                    var res = '';
-                    for (var c of iterate(arg)) {
-                        stack.push(c);
-                        go();
-                        if (truthy(stack.pop()))
-                            res += c;
-                    }
-                    stack.push(res);
+                go();
+                stack.pop();
+                if (arg === 'n') {
+                    stack.push('n[');
                 } else {
-                    var res = [];
-                    for (var item of iterate(arg)) {
-                        go();
-                        if (truthy(stack.pop()))
-                            res.push(item);
-                    }
-                    stack.push(res);
+                    stack.push(arg);
                 }
-            },
-            '◊': function (go) {
-                try {
-                    while (truthy(stack.pop()))
-                        go();
-                } catch (e) {
-                    if (!(e instanceof BreakLoop()))
-                        throw e;
-                }
-            },
-            '♦': function (go) {
-                try {
-                    while (truthy(stack[stack.length - 1]))
-                        go();
-                } catch (e) {
-                    if (!(e instanceof BreakLoop()))
-                        throw e;
-                }
-            }
+            }],
+            '◊': ['While dropping condition', function (go) {
+                stack.pop();
+                go();
+            }],
+            '♦': ['While keeping condition', function (go) {
+                go();
+            }]
         };
 
         parseForwards(0);

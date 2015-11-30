@@ -28,14 +28,14 @@ A Par program places values on the stack and performs operations on them.
 
 There are three common datatypes - numbers, strings, and arrays.    
 
-Number literals mean what they are. If a literal starts with <code>0</code>, the next character begins a new number. When following a number literal, `₁` and `₂` also begin new literals.    
+Number literals mean what they are. If a literal starts with `0`, the next character begins a new number. When following a number literal, `₁` and `₂` also begin new literals.    
 
     12 034₁5            -- pushes 12, 0, 34, 15
 
-String literals begin and end with `\``, with `\\` used to escape. Single-character literals can be made with `'`.
+String literals begin and end with <code>`</code>, with <code>\<code> used to escape. Single-character literals can be made with `'`.
 
     `abc`'d`e\`\t\\f`   -- pushes "abc", "d", and "e`     \f"
 	
 Arrays can be created with the `(` operator, Lisp-style.    
 
-    (2 3`abc`()         -- pushes (2 3 abc ())
+    (2 3`abc`())        -- pushes (2 3 abc ())
