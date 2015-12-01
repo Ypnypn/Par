@@ -914,6 +914,10 @@ window.interpretPar = (function () {
                     return a.length;
             },
             '¡': function (a) {
+                if (typeof a === 'number')
+                    return [stack.splice(stack.length - a, a)];
+                if (typeof a === 'string')
+                    return [...a];
                 if (Array.isArray(a))
                     return a;
             },
@@ -974,8 +978,13 @@ window.interpretPar = (function () {
                     return a.toString(2);
                 if (typeof a === 'string')
                     return parseInt(a, 2);
-                if (Array.isArray(a))
-                    return typeof a[0] === 'undefined' ? 0 : a.reduce(chars['+']);
+                if (Array.isArray(a)) {
+                    if (a.length === 0)
+                        return 0;
+                    if (Array.isArray(a[0]))
+                        return [].concat(...a);
+                    return a.reduce((a, b) => a + b);
+                }
             },
             'π': function () {
                 return Math.PI;
@@ -1107,6 +1116,14 @@ window.interpretPar = (function () {
                             str += String.fromCharCode(oA - ind);
                     return str;
                 }
+            },
+            '√': function (a) {
+                if (typeof a === 'number')
+                    return Math.sqrt(a);
+                if (typeof a === 'string')
+                    return a.split('\n');
+                if (Array.isArray(a))
+                    return a.join('\n');
             },
             '≠': function (a, b) {
                 return +(compare(a, b) !== 0);
@@ -1566,7 +1583,7 @@ window.interpretPar = (function () {
 
 const allParChars =
     '\n !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~' +
-    '¡¦§«¬²´·»½÷˄˅˦˨Σπ‖″‴⁞ⁿ₁₂⅓⅔↑↓↔↕↨∫≠≤≥⌐┐┘╞╡▼◄◊●◘◙☺♦✶';
+    '¡¦§«¬²´·»½÷˄˅˦˨Σπ‖″‴⁞ⁿ₁₂⅓⅔↑↓↔↕↨√∫≠≤≥⌐┐┘╞╡▼◄◊●◘◙☺♦✶';
 
 const arities = {
     '\n': 1,
@@ -1645,6 +1662,7 @@ const arities = {
     '↔': 102,
     '↕': 2,
     '↨': 2,
+    '√': 1,
     '∫': 201,
     '≠': 2,
     '≤': 2,

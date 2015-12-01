@@ -563,6 +563,8 @@ window.analyzePar = (function () {
                 'T[': ['n', 'Size']
             },
             '¡': {
+                'n': ['?[', 'Last n items of stack'],
+                's': ['s,s,s', 'Empty characters onto stack'],
                 'T[': ['T,T,T', 'Empty array onto stack']
             },
             '¦': {
@@ -656,6 +658,11 @@ window.analyzePar = (function () {
                 'n,n': ['n[', '(a b ... n-1)'],
                 's,s': ['s', '(a b ... n-1)']
             },
+            '√': {
+                'n': ['n', 'Square root'],
+                's': ['s[', 'Split by newlines'],
+                'T[': ['s', 'Join by newlines']
+            },
             '≠': {
                 'T,U': ['n', 'Not equal to']
             },
@@ -726,7 +733,25 @@ window.analyzePar = (function () {
             },
             '✶': {
                 'n': ['n', 'No-op'],
-                's': ['?', 'Interpret code'],
+                's': {
+                    get 0() {
+                        if (typeof $ === 'function' && $("#input")[0] && $("#input").val()) {
+                            const firstInputChar = $("#input").val()[0];
+                            if (firstInputChar >= '0' && firstInputChar <= '9') {
+                                return 'n';
+                            }
+                            if (firstInputChar === '(') {
+                                const secondInputChar = $("#input").val()[1];
+                                if (secondInputChar >= '0' && secondInputChar <= '9')
+                                    return 'n[';
+                                return '?[';
+                            }
+                        }
+                        return '?';
+                    },
+                    1: 'Interpret code',
+                    length: 2
+                },
                 'T[': ['?[', 'Interpret code']
             }
         };
@@ -793,7 +818,7 @@ window.analyzePar = (function () {
                 else
                     stack.push(arg);
             }],
-            '˄': ['And', function(go) {
+            '˄': ['And', function (go) {
                 var copy = stack.slice();
                 stack.pop();
                 go();

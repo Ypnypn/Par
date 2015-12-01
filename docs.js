@@ -250,6 +250,8 @@
         'a': 'Length of `a`'
     },
     '¡': {
+        'n': 'Last `a` items on the stack, gathered in an array',
+        's': 'Characters of `a`, separately',
         'a': 'Elements of `a`, separately'
     },
     '¦': {
@@ -368,6 +370,11 @@
     '↨': {
         'nn': 'Integers from `a` (inclusive) to `b` (exclusive)',
         'ss': 'Characters from `a` (inclusive) to `b` (exclusive)'
+    },
+    '√': {
+        'n': 'Square root of `a`',
+        's': '`a` split by newlines',
+        'a': 'Elements of `a` joined with newlines'
     },
     '∫': {
         '?': 'Reduce `a`'
