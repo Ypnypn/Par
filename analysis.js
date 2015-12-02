@@ -95,44 +95,65 @@ window.analyzePar = (function () {
                     stack.push('s');
                     analysis.push([`${sub.substring(i, j + 1)}`, `'${str}'`]);
                     i = j;
-                } else if (ch === '·' || ch === '´' || (ch === '.' && (sub[i + 1] <= '0' || sub[i + 1] >= '9'))) {
-                    i++;
-                    const next = sub[i];
-                    const arity = arities[next];
-                    if (ch === '.') {
-                        if (arity === 1) {
-                            const arg = stack.length !== 0 ? stack.pop() : (analysis.push(['', '[implicit: read line]']), 's');
-                            const iter = iterate(arg);
-                            const result = get(chars[next], iter);
-                            stack.push(result.type + '[');
-                            analysis.push([ch + next, 'Map - ' + result.desc.toLowerCase()]);
-                        } else if (arity === 2) {
-                            const arg2 = iterate(stack.pop());
-                            const arg1 = iterate(stack.pop());
-                            const result = get(chars[next], arg1, arg2);
-                            stack.push(result.type + '[');
-                            analysis.push([ch + next, 'Pairwise - ' + result.desc.toLowerCase()]);
+                } else if (ch in metaChars && !(ch === '.' && sub[i + 1] >= '0' && sub[i + 1] <= '9')) {
+                    if (1 > 0) {
+                        var j = i;
+                        do j++; while (sub[j] in metaChars);
+                        const metas = sub.substring(i, j);
+
+                        const next = sub[j];
+                        var arity = arities[next];
+                        var func = (...a) => get(chars[next], ...a);
+                        for (var l = metas.length; l-- > 0;) {
+                            func = metaChars[metas[l]](func, arity);
+                            arity = metaArities[metas[l]][arity];
                         }
-                    } else if (ch === '·') {
-                        if (arity === 1) {
-                            const arg = stack.length !== 0 ? stack.pop() : (analysis.push(['', '[implicit: read line]']), 's');
-                            const result = get(chars[next], arg);
-                            stack.push('n');
-                            analysis.push([ch + next, 'Is invariant - ' + result.desc.toLowerCase()]);
-                        } else if (arity === 2) {
-                            const arg2 = stack.pop();
-                            const arg1 = stack.pop();
-                            const result = get(chars[next], iterate(arg1), arg2);
-                            stack.push(result.type + '[');
-                            analysis.push([ch + next, 'Map with right parameter - ' + result.desc.toLowerCase()]);
-                        }
-                    } else if (ch === '´') {
-                        if (arity === 2) {
-                            const arg2 = stack.pop();
-                            const arg1 = stack.pop();
-                            const result = get(chars[next], arg1, iterate(arg2));
-                            stack.push(result.type + '[');
-                            analysis.push([ch + next, 'Map with left parameter - ' + result.desc.toLowerCase()]);
+
+                        const args = stack.splice(stack.length - arity);
+                        const result = func(...args);
+                        stack.push(result.type);
+                        analysis.push([sub.substring(i, j + 1), result.desc]);
+
+                        i = j;
+                    } else {
+                        i++;
+                        const next = sub[i];
+                        const arity = arities[next];
+                        if (ch === '.') {
+                            if (arity === 1) {
+                                const arg = stack.length !== 0 ? stack.pop() : (analysis.push(['', '[implicit: read line]']), 's');
+                                const iter = iterate(arg);
+                                const result = get(chars[next], iter);
+                                stack.push(result.type + '[');
+                                analysis.push([ch + next, 'Map - ' + result.desc.toLowerCase()]);
+                            } else if (arity === 2) {
+                                const arg2 = iterate(stack.pop());
+                                const arg1 = iterate(stack.pop());
+                                const result = get(chars[next], arg1, arg2);
+                                stack.push(result.type + '[');
+                                analysis.push([ch + next, 'Pairwise - ' + result.desc.toLowerCase()]);
+                            }
+                        } else if (ch === '·') {
+                            if (arity === 1) {
+                                const arg = stack.length !== 0 ? stack.pop() : (analysis.push(['', '[implicit: read line]']), 's');
+                                const result = get(chars[next], arg);
+                                stack.push('n');
+                                analysis.push([ch + next, 'Is invariant - ' + result.desc.toLowerCase()]);
+                            } else if (arity === 2) {
+                                const arg2 = stack.pop();
+                                const arg1 = stack.pop();
+                                const result = get(chars[next], iterate(arg1), arg2);
+                                stack.push(result.type + '[');
+                                analysis.push([ch + next, 'Map with right parameter - ' + result.desc.toLowerCase()]);
+                            }
+                        } else if (ch === '´') {
+                            if (arity === 2) {
+                                const arg2 = stack.pop();
+                                const arg1 = stack.pop();
+                                const result = get(chars[next], arg1, iterate(arg2));
+                                stack.push(result.type + '[');
+                                analysis.push([ch + next, 'Map with left parameter - ' + result.desc.toLowerCase()]);
+                            }
                         }
                     }
                 } else if (ch === '-' && (i === 0 || sub[i - 1] === ' ') && ((sub[i + 1] >= '1' && sub[i + 1] <= '9') || sub[i + 1] === '.')) {
@@ -431,8 +452,10 @@ window.analyzePar = (function () {
                 '': ['', 'Quit']
             },
             'R': {
-                'nn': ['s', 'Decimal to base n'],
-                'sn': ['n', 'Base n to decimal']
+                'n,n': ['s', 'Decimal to base n'],
+                'n,s': ['s[', 'Substrings of length n'],
+                'n,T[': ['T[[', 'Subarrays of length n'],
+                's,n': ['n', 'Base n to decimal']
             },
             'S': {
                 'n': ['n', 'Base-2 logarithm'],
@@ -536,7 +559,7 @@ window.analyzePar = (function () {
                 'n,n,s': ['s', 'Substring'],
                 'n,n,T[': ['T[', 'Subarray'],
                 's,n,T': ['s', 'Replace character at index'],
-                's,s,s': ['s', 'Replace'],
+                's,s,T': ['s', 'Replace'],
                 'T[,n,T': ['T[', 'Set index'],
                 'T[,n,U': ['?[', 'Set index'],
                 'T,U[,V': ['U[', 'Replace']
@@ -553,7 +576,11 @@ window.analyzePar = (function () {
             },
             '|': {
                 'n,n': ['n', 'Bitwise-or'],
+                'n,s': ['s[', 'Permuations of size n'],
+                'n,T[': ['T[[', 'Permuations of size n'],
+                's,n': ['s[', 'Combinations of size n'],
                 's,s': ['s', 'Intersection'],
+                'T[,n': ['T[[', 'Combinations of size n'],
                 'T[,T[': ['T[', 'Intersection'],
                 'T[,U[': ['?[', 'Intersection']
             },
@@ -875,6 +902,64 @@ window.analyzePar = (function () {
             '♦': ['While keeping condition', function (go) {
                 go();
             }]
+        };
+
+        const metaChars = {
+            '.': function (f, arity) {
+                if (arity === 1) {
+                    return a => {
+                        const iter = iterate(a);
+                        const result = f(iter);
+                        return { type: result.type + '[', desc: 'Map - ' + result.desc.toLowerCase() };
+                    };
+                } else if (arity === 2) {
+                    return (a, b) => {
+                        const arg1 = iterate(a);
+                        const arg2 = iterate(b);
+                        const result = f(arg1, arg2);
+                        return { type: result.type + '[', desc: 'Pairwise - ' + result.desc.toLowerCase() };
+                    };
+                }
+            },
+            '¨': function (f, arity) {
+                if (arity === 2) {
+                    return a => {
+                        const result = f(iterate(a), iterate(a));
+                        return { type: result.type, desc: 'Reduce - ' + result.desc.toLowerCase() };
+                    }
+                }
+                if (arity === 3) {
+                    const result = f(iterate(a), iterate(a), iterate(a));
+                    return { type: result.type, desc: 'Unpack - ' + result.desc.toLowerCase() };
+                }
+            },
+            '·': function (f, arity) {
+                if (arity === 1) {
+                    return a => {
+                        const result = f(a);
+                        return { type: 'n', desc: 'Is invariant - ' + result.desc.toLowerCase() };
+                    };
+                } else if (arity === 2) {
+                    return (a, b) => {
+                        const result = f(iterate(a), b);
+                        return { type: result.type + '[', desc: 'Map with right parameter - ' + result.desc.toLowerCase() };
+                    };
+                }
+            },
+            '´': function (f, arity) {
+                if (arity === 1) {
+                    return a => {
+                        const result = f(iterate(a));
+                        return { type: a === 's' ? 's' : result.type + '[', desc: 'Filter - ' + result.desc.toLowerCase() };
+                    }
+                }
+                if (arity === 2) {
+                    return (a, b) => {
+                        const result = f(a, iterate(b));
+                        return { type: result.type + '[', desc: 'Map with left parameter - ' + result.desc.toLowerCase() };
+                    };
+                }
+            }
         };
 
         parseForwards(0);

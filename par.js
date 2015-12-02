@@ -103,42 +103,28 @@ window.interpretPar = (function () {
                         }
                     }
                     stack.push(str);
-                } else if (ch === '·' || ch === '´' || (ch === '.' && (sub[i + 1] <= '0' || sub[i + 1] >= '9'))) {
-                    i++;
-                    const next = sub[i];
-                    const arity = arities[next];
-                    if (ch === '.') {
-                        if (arity === 1) {
-                            const arg = stack.length !== 0 ? stack.pop() : chars['l']();
-                            stack.push([...iterate(arg)].map(chars[next]));
-                        } else if (arity === 2) {
-                            const arg2 = [...iterate(stack.pop())];
-                            const arg1 = [...iterate(stack.pop())];
-                            stack.push(arg1.map((e, k) => chars[next](e, arg2[k % arg2.length])));
-                        }
-                    } else if (ch === '·') {
-                        if (arity === 1) {
-                            const arg = stack.length !== 0 ? stack.pop() : chars['l']();
-                            stack.push(+(compare(arg, chars[next](arg)) === 0));
-                        } else if (arity === 2) {
-                            const arg2 = stack.pop();
-                            const arg1 = stack.pop();
-                            stack.push([...iterate(arg1)].map(e => chars[next](e, arg2)));
-                        }
-                    } else if (ch === '´') {
-                        if (arity === 2) {
-                            const arg2 = stack.pop();
-                            const arg1 = stack.pop();
-                            stack.push([...iterate(arg2)].map(e => chars[next](arg1, e)));
-                        }
+                } else if (ch in metaChars && !(ch === '.' && sub[i + 1] >= '0' && sub[i + 1] <= '9')) {
+                    var j = i;
+                    do j++; while (sub[j] in metaChars);
+                    const metas = sub.substring(i, j);
+
+                    const next = sub[j];
+                    var arity = arities[next];
+                    var func = chars[next];
+                    for (var m = metas.length; m-- > 0;) {
+                        func = metaChars[metas[m]](func, arity);
+                        arity = metaArities[metas[m]][arity];
                     }
+
+                    const args = stack.splice(stack.length - arity);
+                    stack.push(func(...args));
+                    i = j;
                 } else if (ch === '-' && (i === 0 || sub[i - 1] === ' ') && (sub[i + 1] >= '1' && sub[i + 1] <= '9')) {
                     var j = i;
                     do j++;
                     while (sub[j] >= '0' && sub[j] <= '9');
                     if (sub[j] === '.')
-                        do j++;
-                        while (sub[j] >= '0' && sub[j] <= '9');
+                        do j++; while (sub[j] >= '0' && sub[j] <= '9');
                     stack.push(+sub.substring(i, j));
                     i = j - 1;
                 } else if (ch === '.') {
@@ -146,8 +132,7 @@ window.interpretPar = (function () {
                     var next = sub[j];
                     if (next >= '0' && next <= '9') {
                         var j = i;
-                        do j++;
-                        while (sub[j] >= '0' && sub[j] <= '9');
+                        do j++; while (sub[j] >= '0' && sub[j] <= '9');
                         stack.push(+sub.substring(i, j));
                         i = j - 1;
                     }
@@ -159,8 +144,7 @@ window.interpretPar = (function () {
                         do j++;
                         while (sub[j] >= '0' && sub[j] <= '9');
                         if (sub[j] === '.' && (sub[j + 1] >= '0' && sub[j + 1] <= '9'))
-                            do j++;
-                            while (sub[j] >= '0' && sub[j] <= '9');
+                            do j++; while (sub[j] >= '0' && sub[j] <= '9');
                         stack.push(+('1' + sub.substring(i + 1, j)));
                         i = j - 1;
                     } else {
@@ -172,9 +156,8 @@ window.interpretPar = (function () {
                         do j++;
                         while (sub[j] >= '0' && sub[j] <= '9');
                         if (sub[j] === '.' && (sub[j + 1] >= '0' && sub[j + 1] <= '9'))
-                            do j++;
-                            while (sub[j] >= '0' && sub[j] <= '9');
-                        stack.push(+(`2${sub.substring(i + 1, j)}`));
+                            do j++; while (sub[j] >= '0' && sub[j] <= '9');
+                        stack.push(+('2' + sub.substring(i + 1, j)));
                         i = j - 1;
                     } else {
                         var top = stack.pop();
@@ -185,8 +168,7 @@ window.interpretPar = (function () {
                     do j++;
                     while (sub[j] >= '0' && sub[j] <= '9');
                     if (sub[j] === '.' && (sub[j + 1] >= '0' && sub[j + 1] <= '9'))
-                        do j++;
-                        while (sub[j] >= '0' && sub[j] <= '9');
+                        do j++; while (sub[j] >= '0' && sub[j] <= '9');
                     stack.push(+sub.substring(i, j));
                     i = j - 1;
                 } else if (ch >= 'V' && ch <= 'Z') {
@@ -253,31 +235,13 @@ window.interpretPar = (function () {
                 if (typeof a === 'number') {
                     const num = Math.abs(a | 0);
                     var res = 1;
-                    for (var i = 1; i <= num; i++)
+                    for (var i = 2; i <= num; i++)
                         res *= i;
                     return res;
                 }
-
-                function strPermute(str) {
-                    if (str.length === 1)
-                        return [str];
-                    if (str.length === 0)
-                        return [];
-                    return [].concat(...[...str].map((c, i) => strPermute(str.substring(0, i) +str.substring(i +1)).map(s => c +s)));
-                }
-
                 if (typeof a === 'string') {
                     return strPermute(a);
                 }
-
-                function arrPermute(arr) {
-                    if (arr.length === 1)
-                        return [arr];
-                    if (arr.length === 0)
-                        return [];
-                    return [].concat(...arr.map((e, i) => arrPermute(arr.slice(0, i).concat(arr.slice(i +1))).map(s =>[e].concat(s))));
-                }
-
                 if (Array.isArray(a)) {
                     return arrPermute(a);
                 }
@@ -503,10 +467,24 @@ window.interpretPar = (function () {
                 throw new ProgramOver();
             },
             'R': function (a, b) {
-                if (typeof a === 'number' && typeof b === 'number')
+                if (typeof a === 'number' && typeof b === 'number') {
                     return a.toString(b).toUpperCase();
-                if (typeof a === 'string' && typeof b === 'number')
+                }
+                if (typeof a === 'number' && typeof b === 'string') {
+                    const res = [];
+                    for (var i = 0; i < b.length - a + 1; i++)
+                        res.push(b.slice(i, i + a));
+                    return res;
+                }
+                if (typeof a === 'number' && Array.isArray(b)) {
+                    const res = [];
+                    for (var i = 0; i < b.length - a + 1; i++)
+                        res.push(b.slice(i, i + a));
+                    return res;
+                }
+                if (typeof a === 'string' && typeof b === 'number') {
                     return parseInt(a, b);
+                }
             },
             'S': function (a) {
                 if (typeof a === 'number') {
@@ -796,8 +774,8 @@ window.interpretPar = (function () {
                     var index = (b % size + size) % size;
                     return a.substring(0, index) + c + a.substring(index + 1);
                 }
-                if (typeof a === 'string' && typeof b === 'string' && typeof c === 'string') {
-                    return b.split(a).join(c);
+                if (typeof a === 'string' && typeof b === 'string') {
+                    return b.split(a).join(stringify(c));
                 }
                 if (Array.isArray(a) && typeof b === 'number') {
                     var size = a.length;
@@ -878,8 +856,18 @@ window.interpretPar = (function () {
                 }
             },
             '|': function (a, b) {
-                if (typeof a === 'number' && typeof b === 'number')
+                if (typeof a === 'number' && typeof b === 'number') {
                     return a | b;
+                }
+                if (typeof a === 'number' && typeof b === 'string') {
+                    return strPerm(b, a);
+                }
+                if (typeof a === 'number' && Array.isArray(b)) {
+                    return arrPerm(b, a);
+                }
+                if (typeof a === 'string' && typeof b === 'number') {
+                    return strComb(a, b);
+                }
                 if (typeof a === 'string' && typeof b === 'string') {
                     var temp = b;
                     var ret = '';
@@ -891,6 +879,9 @@ window.interpretPar = (function () {
                         }
                     }
                     return ret + temp;
+                }
+                if (Array.isArray(a) && typeof b === 'number') {
+                    return arrComb(a, b);
                 }
                 if (Array.isArray(a) && Array.isArray(b)) {
                     var temp = b.reverse();
@@ -1483,6 +1474,41 @@ window.interpretPar = (function () {
             }
         };
 
+        const metaChars = {
+            '.': function (f, arity) {
+                if (arity === 1) {
+                    return a =>[...iterate(a)].map(f);
+                } else if (arity === 2) {
+                    return (a, b) => a.map((e, k) => f(e, b[k % b.length]));
+                }
+            },
+            '¨': function (f, arity) {
+                if (arity === 2) {
+                    return a => (a === 0 || a.length === 0) ? 0 : [...iterate(a)].reduce(f);
+                } else if (arity === 3) {
+                    return a => f(a[0], a[1], a[2]);
+                }
+            },
+            '·': function (f, arity) {
+                if (arity === 1) {
+                    return a => +(compare(a, f(a)) === 0);
+                } else if (arity === 2) {
+                    return (a, b) =>[...iterate(a)].map(e => f(e, b));
+                }
+            },
+            '´': function (f, arity) {
+                if (arity === 1) {
+                    if (typeof a === 'string')
+                        return a =>[...a].filter(f);
+                    else
+                        return a => iterate(a).filter(f);
+                }
+                if (arity === 2) {
+                    return (a, b) =>[...iterate(b)].map(e => f(a, e));
+                }
+            }
+        };
+
         parseForwards(0);
 
         try {
@@ -1535,6 +1561,55 @@ window.interpretPar = (function () {
         return ret;
     }
 
+    function strPermute(str) {
+        if (str.length === 1)
+            return [str];
+        if (str.length === 0)
+            return [];
+        return [].concat(...[...str].map((c, i) => strPermute(str.substring(0, i) +str.substring(i +1)).map(s => c +s)));
+    }
+
+    function arrPermute(arr) {
+        if (arr.length === 1)
+            return [arr];
+        if (arr.length === 0)
+            return [];
+        return [].concat(...arr.map((e, i) => arrPermute(arr.slice(0, i).concat(arr.slice(i +1))).map(s =>[e].concat(s))));
+    }
+
+    function strPerm(str, num) {
+        if (num === 0)
+            return [''];
+        if (num === 1)
+            return [...str];
+        return [].concat(...[...str].map((c, i) =>strPerm(str.substring(0, i) +str.substring(i+1), num-1).map(s => c+s)));
+    }
+
+    function arrPerm(arr, num) {
+        if (num === 0)
+            return [[]];
+        if (num === 1)
+            return arr;
+        return [].concat(...arr.map((e, i) =>arrPerm(arr.slice(0, i).concat(arr.slice(i+1)), num-1).map(a => [e].concat(a))));
+    }
+
+    function strComb(str, num) {
+        if (num === 0)
+            return [''];
+        if (num === 1)
+            return [...str];
+        return [].concat(...[...str].map((c, i) =>strComb(str.substring(i+1), num-1).map(s => c+s)));
+    }
+
+    function arrComb(arr, num) {
+        if (num === 0)
+            return [[]];
+        if (num === 1)
+            return arr;
+        return [].concat(...arr.map((e, i) =>arrComb(arr.slice(i+1), num-1).map(a => [e].concat(a))));
+    }
+
+
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const formatOptions = {
@@ -1583,7 +1658,7 @@ window.interpretPar = (function () {
 
 const allParChars =
     '\n !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~' +
-    '¡¦§«¬²´·»½÷˄˅˦˨Σπ‖″‴⁞ⁿ₁₂⅓⅔↑↓↔↕↨√∫≠≤≥⌐┐┘╞╡▼◄◊●◘◙☺♦✶';
+    '¡¦§¨«¬²´·»½÷˄˅˦˨Σπ‖″‴⁞ⁿ₁₂⅓⅔↑↓↔↕↨√∫≠≤≥⌐┐┘╞╡▼◄◊●◘◙☺♦✶';
 
 const arities = {
     '\n': 1,
@@ -1681,6 +1756,13 @@ const arities = {
     '☺': 1,
     '♦': 200,
     '✶': 101
+};
+
+const metaArities = {
+    '.': [NaN, 1, 2],
+    '¨': [NaN, NaN, 1, 1],
+    '´': [NaN, 1, 2],
+    '·': [NaN, 1, 2]
 };
 
 function stringify(val) {

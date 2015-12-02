@@ -100,6 +100,8 @@
     },
     'R': {
         'nn': '`a` in base `b`',
+        'ns': 'All substrings of `b` with length `a`',
+        'na': 'All subarrays of `b` with length `a`',
         'sn': '`a`, treated as in base `b`'
     },
     'S': {
@@ -204,7 +206,7 @@
         'nns': 'Characters from index `a` (inclusive) to `b` (exclusive) of `c`',
         'nna': 'Elements from index `a` (inclusive) to `b` (exclusive) of `c`',
         'sn?': '`a`, with the `b`\'th character replaced with `c`',
-        'sss': '`b`, with each `a` replaced with `c`',
+        'ss?': '`b`, with each `a` replaced with `c`',
         'an?': '`a`, with the `b`\'th element replaced with `c`',
         '?a?': '`b`, with each `a` replaced with `c`'
     },
@@ -238,7 +240,11 @@
     },
     '|': {
         'nn': 'Bitwise-or of `a` and `b`',
+        'ns': 'Permutations of `b` with length `a`',
+        'na': 'Permutations of `b` with length `a`',
+        'sn': 'Combinations of `b` with length `a`',
         'ss': 'Union of `a` and `b`, in the order of `a` followed by remaining characters of `b`',
+        'an': 'Combinations of `b` with length `a`',
         'aa': 'Union of `a` and `b`, in the order of `a` followed by remaining elements of `b`'
     },
     '}': {
@@ -260,6 +266,9 @@
     '§': {
         '?': 'Sort `a`'
     },
+    '¨': {
+        '': 'Reduce, or unpack arguments'
+    },
     '«': {
         'nn': '`a` shifted left by `b`',
         'sn': 'First `b` characters of `b`',
@@ -274,10 +283,10 @@
         'a': 'Cartesian product of `a` and itself'
     },
     '´': {
-        '': 'Map with left-parameter'
+        '': 'Filter, or map with left-parameter'
     },
     '·': {
-        '': 'Immutable, or map with right-parameter'
+        '': 'Invariant, or map with right-parameter'
     },
     '»': {
         'nn': '`a` shifted right by `b`',
@@ -286,8 +295,8 @@
     },
     '½': {
         'n': '`a` divided by two',
-        's': 'Medians of `a`',
-        'a': 'Medians of `a`'
+        's': 'Middle of `a`',
+        'a': 'Middle of `a`'
     },
     '÷': {
         'nn': '`a` divided by `b`'
