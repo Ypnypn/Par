@@ -119,7 +119,10 @@ window.interpretPar = (function () {
                     const args = stack.splice(stack.length - arity);
                     stack.push(func(...args));
                     i = j;
-                } else if (ch === '-' && (i === 0 || sub[i - 1] === ' ') && (sub[i + 1] >= '1' && sub[i + 1] <= '9')) {
+                } else if (ch === '-' &&
+                                (i === 0 || sub[i - 1] === ' ') &&
+                                ((sub[i + 1] >= '1' && sub[i + 1] <= '9') ||
+                                      (sub[i + 1] === '.' && sub[i + 2] >= '1' && sub[i + 2] <= '9'))) {
                     var j = i;
                     do j++;
                     while (sub[j] >= '0' && sub[j] <= '9');
@@ -168,9 +171,14 @@ window.interpretPar = (function () {
                     do j++;
                     while (sub[j] >= '0' && sub[j] <= '9');
                     if (sub[j] === '.' && (sub[j + 1] >= '0' && sub[j + 1] <= '9'))
-                        do j++; while (sub[j] >= '0' && sub[j] <= '9');
+                        do j++;
+                        while (sub[j] >= '0' && sub[j] <= '9');
                     stack.push(+sub.substring(i, j));
                     i = j - 1;
+                } else if (ch === '⁰') {
+                    var last = stack[stack.length - 1];
+                    stack.length = 1;
+                    stack[0] = last;
                 } else if (ch >= 'V' && ch <= 'Z') {
                     vars[ch.toLowerCase()] = stack[stack.length - 1];
                 } else if (ch >= 'v' && ch <= 'z') {
@@ -665,10 +673,15 @@ window.interpretPar = (function () {
             },
             'p': function (a) {
                 if (typeof a === 'number') {
-                    var num = Math.abs(a | 0);
-                    if (num < 2)
-                        return [a | 0];
-                    var factors = a === num ? [] : [-1];
+                    var num = a > 0 ? Math.floor(a) : Math.ceil(a);
+                    if (num === 1)
+                        return [];
+                    if (num === 0)
+                        return [0];
+                    if (num === -1)
+                        return [-1];
+                    num = Math.abs(num);
+                    var factors = a > 0 ? [] : [-1];
                     for (var prime of[2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]) {
                         while (num % prime === 0) {
                             factors.push(prime);
@@ -926,6 +939,24 @@ window.interpretPar = (function () {
             '¬': function (a) {
                 return +!truthy(a);
             },
+            '®': function (a, b) {
+                if (typeof a === 'number' && typeof b === 'number') {
+                    const arr = [];
+                    for (var pow = 1; pow < a; pow *= b) {
+                        arr.push((a / pow | 0) % b);
+                    }
+                    return arr.reverse();
+                }
+                if (Array.isArray(a) && typeof b === 'number') {
+                    var res = 0;
+                    var pow = 1;
+                    for (var n of a.reverse()) {
+                        res += n * pow;
+                        pow *= b;
+                    }
+                    return res;
+                }
+            },
             '²': function (a) {
                 return chars['*'](a, a);
             },
@@ -1029,6 +1060,17 @@ window.interpretPar = (function () {
                 }
                 if (Array.isArray(b)) {
                     return +(b.indexOf(a) !== -1);
+                }
+            },
+            '℗': function (a) {
+                if (typeof a === 'number') {
+                    return Math.exp(a);
+                }
+                if (typeof a === 'string') {
+                    return strPermAll(a);
+                }
+                if (Array.isArray(a)) {
+                    return arrPermAll(a);
                 }
             },
             '⅓': function (a, b, c) {
@@ -1483,7 +1525,11 @@ window.interpretPar = (function () {
                 }
             },
             '¨': function (f, arity) {
-                if (arity === 2) {
+                if (arity === 1) {
+                    return a => typeof a === 'string' ?
+                        [...a].filter(c => !truthy(f(c))).join('') :
+                        [...iterate(a)].filter(e => !truthy(f(e)));
+                } else if (arity === 2) {
                     return a => (a === 0 || a.length === 0) ? 0 : [...iterate(a)].reduce(f);
                 } else if (arity === 3) {
                     return a => f(a[0], a[1], a[2]);
@@ -1498,10 +1544,9 @@ window.interpretPar = (function () {
             },
             '´': function (f, arity) {
                 if (arity === 1) {
-                    if (typeof a === 'string')
-                        return a =>[...a].filter(f);
-                    else
-                        return a => iterate(a).filter(f);
+                    return a => typeof a === 'string' ?
+                            [...a].filter(c => truthy(f(c))).join('') :
+                            [...iterate(a)].filter(e => truthy(f(e)));
                 }
                 if (arity === 2) {
                     return (a, b) =>[...iterate(b)].map(e => f(a, e));
@@ -1589,8 +1634,32 @@ window.interpretPar = (function () {
         if (num === 0)
             return [[]];
         if (num === 1)
-            return arr;
-        return [].concat(...arr.map((e, i) =>arrPerm(arr.slice(0, i).concat(arr.slice(i+1)), num-1).map(a => [e].concat(a))));
+            return arr.map(e =>[e]);
+        return [].concat(...arr.map((e, i) =>arrPerm(arr.slice(0, i).concat(arr.slice(i+1)), num-1).map(a =>[e].concat(a))));
+    }
+
+    function strPermAll(str) {
+        var perms = [''];
+        for (var ch of str) {
+            for(var perm of perms.slice()) {
+                for (var i = perm.length; i >= 0; i--) {
+                    perms.push(perm.slice(0, i) + ch + perm.slice(i));
+                }
+            }
+        }
+        return perms;
+    }
+
+    function arrPermAll(arr) {
+        var perms = [[]];
+        for (var e of arr) {
+            for(var perm of perms.slice()) {
+                for (var i = perm.length; i >= 0; i--) {
+                    perms.push(perm.slice(0, i).concat([e], perm.slice(i)));
+                }
+            }
+        }
+        return perms;
     }
 
     function strComb(str, num) {
@@ -1606,7 +1675,7 @@ window.interpretPar = (function () {
             return [[]];
         if (num === 1)
             return arr;
-        return [].concat(...arr.map((e, i) =>arrComb(arr.slice(i+1), num-1).map(a => [e].concat(a))));
+        return [].concat(...arr.map((e, i) =>arrComb(arr.slice(i+1), num-1).map(a =>[e].concat(a))));
     }
 
 
@@ -1658,7 +1727,7 @@ window.interpretPar = (function () {
 
 const allParChars =
     '\n !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~' +
-    '¡¦§¨«¬²´·»½÷˄˅˦˨Σπ‖″‴⁞ⁿ₁₂⅓⅔↑↓↔↕↨√∫≠≤≥⌐┐┘╞╡▼◄◊●◘◙☺♦✶';
+    '¡¦§¨«¬®²´·»½÷˄˅˦˨Σπ‖″‴⁞⁰ⁿ₁₂℗⅓⅔↑↓↔↕↨√∫≠≤≥⌐┐┘╞╡▼◄◊●◘◙☺♦✶';
 
 const arities = {
     '\n': 1,
@@ -1715,6 +1784,7 @@ const arities = {
     '§': 201,
     '«': 2,
     '¬': 1,
+    '®': 2,
     '²': 1,
     '»': 2,
     '½': 1,
@@ -1730,6 +1800,7 @@ const arities = {
     '‴': 101,
     '⁞': 201,
     'ⁿ': 2,
+    '℗': 1,
     '⅓': 103,
     '⅔': 103,
     '↑': 1,
@@ -1760,7 +1831,7 @@ const arities = {
 
 const metaArities = {
     '.': [NaN, 1, 2],
-    '¨': [NaN, NaN, 1, 1],
+    '¨': [NaN, 1, 1, 1],
     '´': [NaN, 1, 2],
     '·': [NaN, 1, 2]
 };

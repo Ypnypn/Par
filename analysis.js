@@ -156,7 +156,10 @@ window.analyzePar = (function () {
                             }
                         }
                     }
-                } else if (ch === '-' && (i === 0 || sub[i - 1] === ' ') && ((sub[i + 1] >= '1' && sub[i + 1] <= '9') || sub[i + 1] === '.')) {
+                } else if (ch === '-' &&
+                                (i === 0 || sub[i - 1] === ' ') &&
+                                ((sub[i + 1] >= '1' && sub[i + 1] <= '9') ||
+                                      (sub[i + 1] === '.' && sub[i + 2] >= '1' && sub[i + 2] <= '9'))) {
                     var j = i;
                     do j++;
                     while (sub[j] >= '0' && sub[j] <= '9');
@@ -221,6 +224,11 @@ window.analyzePar = (function () {
                     stack.push('n');
                     analysis.push([sub.substring(i, j), +sub.substring(i, j)]);
                     i = j - 1;
+                } else if (ch === '⁰') {
+                    var last = stack[stack.length - 1];
+                    stack.length = 1;
+                    stack[0] = last;
+                    analysis.push(['⁰', 'Empty stack except last element']);
                 } else if (ch >= 'V' && ch <= 'Z') {
                     vars[ch.toLowerCase()] = stack[stack.length - 1];
                     analysis.push([ch, `Assign to ${ch.toLowerCase()}`]);
@@ -605,6 +613,10 @@ window.analyzePar = (function () {
             '¬': {
                 'T': ['n', 'Not']
             },
+            '®': {
+                'n,n': ['n[', 'Decimal to base n, as array'],
+                'T[,n': ['n', 'Base n as array to decimal']
+            },
             '²': {
                 'n': ['n', 'Square'],
                 's': ['s[', 'Cartesian square'],
@@ -657,6 +669,11 @@ window.analyzePar = (function () {
                 's,s': ['n', 'Contains'],
                 'T[,n': ['T[[', 'Cartesian power'],
                 'T,U[': ['n', 'Contains']
+            },
+            '℗': {
+                'n': ['n', 'e to the power of n'],
+                's': ['s[', 'Permuations of any size'],
+                'T[': ['T[[', 'Permuations of any size']
             },
             '⅓': {
                 'T,U,V': ['V,T,U', 'Move top of stack to third']
@@ -922,6 +939,12 @@ window.analyzePar = (function () {
                 }
             },
             '¨': function (f, arity) {
+                if (arity === 1) {
+                    return a => {
+                        const result = f(iterate(a));
+                        return { type: a === 's' ? 's' : result.type + '[', desc: 'Filter by not - ' + result.desc.toLowerCase() };
+                    }
+                }
                 if (arity === 2) {
                     return a => {
                         const result = f(iterate(a), iterate(a));

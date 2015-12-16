@@ -267,7 +267,7 @@
         '?': 'Sort `a`'
     },
     '¨': {
-        '': 'Reduce, or unpack arguments'
+        '': 'Filter by not, or reduce, or unpack arguments'
     },
     '«': {
         'nn': '`a` shifted left by `b`',
@@ -276,6 +276,10 @@
     },
     '¬': {
         '?': 'Logical not of `a`'
+    },
+    '®': {
+        'nn': 'Array of exponents of `a` in base `b`',
+        'an': '`a`, treated as array of exponents in base `b`'
     },
     '²': {
         'n': 'Square of `a`',
@@ -310,12 +314,12 @@
     '˦': {
         'nn': 'Larger of `a` and `b`',
         's?': 'First index of `b` in `a`',
-        'a?': 'First index of `b` in `a`',
+        'a?': 'First index of `b` in `a`'
     },
     '˨': {
         'nn': 'Smaller of `a` and `b`',
         's?': 'Last index of `b` in `a`',
-        'a?': 'Last index of `b` in `a`',
+        'a?': 'Last index of `b` in `a`'
     },
     'Σ': {
         'n': '`a` in binary',
@@ -340,6 +344,9 @@
         's': 'Map `a` with iteration',
         'a': 'Map `a` with iteration'
     },
+    '⁰': {
+        '': 'Empty stack except last element'
+    },
     'ⁿ': {
         'nn': '`a` to the power of `b`',
         'sn': '`b`-ary cartesian power of `a`',
@@ -352,6 +359,11 @@
     },
     '₂': {
         '': 'If preceded by a numeral, begin a new number starting with 2; otherwise, remove second-to-top of stack'
+    },
+    '℗': {
+        'n': 'e to the power of `a`',
+        's': 'Permutations of `a`, of any size',
+        'a': 'Permutations of `a`, of any size'
     },
     '⅓': {
         '???': '`c`, then `a`, then `b`'
